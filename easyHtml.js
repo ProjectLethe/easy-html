@@ -43,7 +43,6 @@ export function setEzVariables(newValues) {
   const relevantEzIfAndValueElements = Object.keys(newValues)
     .map((key) => (varObserver[key] == undefined ? [] : varObserver[key]))
     .flat(1);
-  print(relevantEzIfAndValueElements);
   updateEzIfs(relevantEzIfAndValueElements);
   updateEzValues(relevantEzIfAndValueElements);
   updateEzFor(baseEzForElemens);
@@ -57,10 +56,13 @@ export function setEzVariables(newValues) {
  */
 function updateEzIfs(ezIfElements) {
   for (const oneElement of ezIfElements) {
-    if (oneElement.tagName.toLowerCase() !== "ez-if") {
+    if (
+      oneElement.tagName.toLowerCase() !== "ez-if" ||
+      !oneElement.hasAttribute("var")
+    ) {
       continue;
     }
-    const condition = ezVariables[oneElement.getAttribute("condition")];
+    const condition = ezVariables[oneElement.getAttribute("var")];
     oneElement.style.display = condition ? "" : "none";
   }
 }
@@ -73,7 +75,10 @@ function updateEzIfs(ezIfElements) {
  */
 function updateEzValues(ezValueElemens) {
   for (const oneElement of ezValueElemens) {
-    if (oneElement.tagName.toLowerCase() !== "ez-value") {
+    if (
+      oneElement.tagName.toLowerCase() !== "ez-value" ||
+      !oneElement.hasAttribute("var")
+    ) {
       continue;
     }
     const value = ezVariables[oneElement.getAttribute("var")];
@@ -88,7 +93,13 @@ function updateEzValues(ezValueElemens) {
  */
 function updateEzFor(ezForElemens) {
   for (const oneEzForElement of ezForElemens) {
-    const list = ezVariables[oneEzForElement.getAttribute("list")];
+    if (
+      oneEzForElement.tagName.toLowerCase() !== "ez-for" ||
+      !oneEzForElement.hasAttribute("var")
+    ) {
+      continue;
+    }
+    const list = ezVariables[oneEzForElement.getAttribute("var")];
     if (!Array.isArray(list)) {
       continue;
     }
@@ -97,8 +108,12 @@ function updateEzFor(ezForElemens) {
 
     const childNodes = ezForChildrenMap.get(oneEzForElement);
     list.forEach((element, index) => {
-      ezVariables[elementName] = element;
-      ezVariables[counterName] = index;
+      if (elementName != undefined) {
+        ezVariables[elementName] = element;
+      }
+      if (counterName != undefined) {
+        ezVariables[counterName] = index;
+      }
       const copies = childNodes.map((child) => child.cloneNode(true));
       const tempDiv = document.createElement("div");
       copies.forEach((copy) => tempDiv.appendChild(copy));

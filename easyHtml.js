@@ -13,26 +13,69 @@ for (const oneEzForElement of baseEzForElemens) {
 const baseEzIfElements = document.querySelectorAll("ez-if");
 const baseEzValueElemens = document.querySelectorAll("ez-value");
 
+for (const oneElement of baseEzIfElements) {
+  const condition = oneElement.getAttribute("condition");
+  if (varObserver[condition] == undefined) {
+    varObserver[condition] = [];
+  }
+  varObserver[condition].push(oneElement);
+}
+for (const oneElement of baseEzValueElemens) {
+  const varName = oneElement.getAttribute("var");
+  if (varObserver[varName] == undefined) {
+    varObserver[varName] = [];
+  }
+  varObserver[varName].push(oneElement);
+}
+
 function print(value) {
   console.log(value);
 }
 
+/**
+ * Updates the ezVariables object with the provided new values and updates the display style of relevant ezIf, ezValue, and ezFor elements based on the updated values.
+ *
+ * @param {object} newValues - The new values to update the ezVariables object with.
+ * @return {void} This function does not return a value.
+ */
 export function setEzVariables(newValues) {
   Object.assign(ezVariables, newValues);
-  updateEzIfs(baseEzIfElements);
-  updateEzValues(baseEzValueElemens);
+  const relevantEzIfAndValueElements = Object.keys(newValues)
+    .map((key) => (varObserver[key] == undefined ? [] : varObserver[key]))
+    .flat(1);
+  print(relevantEzIfAndValueElements);
+  updateEzIfs(relevantEzIfAndValueElements);
+  updateEzValues(relevantEzIfAndValueElements);
   updateEzFor(baseEzForElemens);
 }
 
+/**
+ * Updates the display style of the given ezIfElements based on their conditions.
+ *
+ * @param {NodeList} ezIfElements - The list of ezIf elements to update.
+ * @return {void} This function does not return a value.
+ */
 function updateEzIfs(ezIfElements) {
   for (const oneElement of ezIfElements) {
+    if (oneElement.tagName.toLowerCase() !== "ez-if") {
+      continue;
+    }
     const condition = ezVariables[oneElement.getAttribute("condition")];
     oneElement.style.display = condition ? "" : "none";
   }
 }
 
+/**
+ * Updates the ezValue elements in the document based on the values in the ezVariables object.
+ *
+ * @param {NodeList} ezValueElemens - The list of ezValue elements to update.
+ * @return {void} This function does not return a value.
+ */
 function updateEzValues(ezValueElemens) {
   for (const oneElement of ezValueElemens) {
+    if (oneElement.tagName.toLowerCase() !== "ez-value") {
+      continue;
+    }
     const value = ezVariables[oneElement.getAttribute("var")];
     oneElement.innerText = value == undefined ? "" : value;
   }
@@ -54,7 +97,6 @@ function updateEzFor(ezForElemens) {
 
     const childNodes = ezForChildrenMap.get(oneEzForElement);
     list.forEach((element, index) => {
-      
       ezVariables[elementName] = element;
       ezVariables[counterName] = index;
       const copies = childNodes.map((child) => child.cloneNode(true));

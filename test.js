@@ -18,9 +18,10 @@ const inputObj = {
       description: "Name:",
     },
     justATextInput: {
-      type: "text",
+      type: "textarea",
       length: 2000,
       description: "What do you want to say",
+      placeholder: "Something",
       onChange: (values) => {
         console.log(values.yourName + ": " + values.justATextInput);
       },
@@ -53,5 +54,4 @@ const inputObj = {
   
   // Anwendung der Funktion
   const { form, values } = createDialog(inputObj);
-  document.body.appendChild(form);
-  
+  document.getElementById("lol").appendChild(form);

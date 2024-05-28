@@ -141,81 +141,93 @@ export function createDialog(inputObject) {
     label.innerText = config.description;
     wrapper.appendChild(label);
 
-    let input;
-
+    let dialogElement;
     switch (config.type) {
       case "text":
-        input = document.createElement("input");
-        input.type = "text";
-        input.maxLength = config.length;
-        input.placeholder = config.placeholder || "";
-        input.value = config.default;
+        dialogElement = document.createElement("input");
+        dialogElement.type = "text";
+        dialogElement.maxLength = config.length;
+        dialogElement.placeholder = config.placeholder || "";
+        dialogElement.value = config.default || "";
         if (config.onChange) {
-          input.onchange = () => config.onChange(values);
+          dialogElement.onchange = () => config.onChange(values);
         }
         break;
-      case "button":
-        input = document.createElement("button");
-        input.innerText = config.description;
+      case "textarea":
+        dialogElement = document.createElement("textarea");
+        dialogElement.maxLength = config.length;
+        dialogElement.placeholder = config.placeholder || "";
+        dialogElement.value = config.default || "";
         if (config.onChange) {
-          input.addEventListener("click", () => print("hello"));
+          dialogElement.onchange = () => config.onChange(values);
+        }
+        dialogElement.style.resize = "none";
+        break;
+      case "button":
+        dialogElement = document.createElement("button");
+        dialogElement.innerText = config.description;
+        if (config.onChange) {
+          dialogElement.addEventListener("click", () => print("hello"));
         }
         break;
       case "switch":
-        input = document.createElement("input");
-        input.type = "checkbox";
-        input.checked = config.default;
+        dialogElement = document.createElement("input");
+        dialogElement.type = "checkbox";
+        dialogElement.checked = config.default;
         if (config.onChange) {
-          input.onchange = () => config.onChange(values);
+          dialogElement.onchange = () => config.onChange(values);
         }
         break;
       case "dropdown":
-        input = document.createElement("select");
+        dialogElement = document.createElement("select");
         config.choices.forEach((choice) => {
           const option = document.createElement("option");
           option.value = choice;
           option.text = choice;
-          input.appendChild(option);
+          dialogElement.appendChild(option);
         });
-        input.value = config.default;
+        dialogElement.value = config.default;
         if (config.onChange) {
-          input.onchange = () => config.onChange(values);
+          dialogElement.onchange = () => config.onChange(values);
         }
         break;
       case "number":
-        input = document.createElement("input");
-        input.type = "number";
-        input.min = config.min;
-        input.max = config.max;
-        input.value = config.default || 0;
+        dialogElement = document.createElement("input");
+        dialogElement.type = "number";
+        dialogElement.min = config.min;
+        dialogElement.max = config.max;
+        dialogElement.value = config.default || 0;
         if (config.onChange) {
-          input.onchange = () => config.onChange(values);
+          dialogElement.onchange = () => config.onChange(values);
         }
         break;
       case "checkbox":
-        input = document.createElement("input");
-        input.type = "checkbox";
-        input.checked = config.default;
+        dialogElement = document.createElement("input");
+        dialogElement.type = "checkbox";
+        dialogElement.checked = config.default;
         if (config.onChange) {
-          input.onchange = () => {
+          dialogElement.onchange = () => {
             print("lol");
             config.onChange(values);
           };
         }
         break;
       case "range":
-        input = document.createElement("input");
+        dialogElement = document.createElement("span");
+
+        const input = document.createElement("input");
         input.type = "range";
         input.min = config.min;
         input.max = config.max;
         input.value = config.default || 0;
+        dialogElement.appendChild(input);
         if (config.showValue) {
           const valueLabel = document.createElement("span");
           valueLabel.innerText = config.default || 0;
           input.addEventListener("input", () => {
             valueLabel.innerText = input.value;
           });
-          wrapper.appendChild(valueLabel);
+          dialogElement.appendChild(valueLabel);
         }
         if (config.onChange) {
           input.onchange = () => config.onChange(values);
@@ -223,7 +235,7 @@ export function createDialog(inputObject) {
         break;
     }
 
-    wrapper.appendChild(input);
+    wrapper.appendChild(dialogElement);
     return wrapper;
   }
 

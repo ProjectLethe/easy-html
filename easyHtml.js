@@ -130,3 +130,109 @@ function updateEzFor(ezForElemens) {
     });
   }
 }
+
+export function createDialog(inputObject) {
+  const form = document.createElement("div");
+  const values = {};
+
+  function createInput(key, config) {
+    const wrapper = document.createElement("div");
+    const label = document.createElement("label");
+    label.innerText = config.description;
+    wrapper.appendChild(label);
+
+    let input;
+
+    switch (config.type) {
+      case "text":
+        input = document.createElement("input");
+        input.type = "text";
+        input.maxLength = config.length;
+        input.placeholder = config.placeholder || "";
+        input.value = config.default;
+        if (config.onChange) {
+          input.onchange = () => config.onChange(values);
+        }
+        break;
+      case "button":
+        input = document.createElement("button");
+        input.innerText = config.description;
+        if (config.onChange) {
+          input.addEventListener("click", () => print("hello"));
+        }
+        break;
+      case "switch":
+        input = document.createElement("input");
+        input.type = "checkbox";
+        input.checked = config.default;
+        if (config.onChange) {
+          input.onchange = () => config.onChange(values);
+        }
+        break;
+      case "dropdown":
+        input = document.createElement("select");
+        config.choices.forEach((choice) => {
+          const option = document.createElement("option");
+          option.value = choice;
+          option.text = choice;
+          input.appendChild(option);
+        });
+        input.value = config.default;
+        if (config.onChange) {
+          input.onchange = () => config.onChange(values);
+        }
+        break;
+      case "number":
+        input = document.createElement("input");
+        input.type = "number";
+        input.min = config.min;
+        input.max = config.max;
+        input.value = config.default || 0;
+        if (config.onChange) {
+          input.onchange = () => config.onChange(values);
+        }
+        break;
+      case "checkbox":
+        input = document.createElement("input");
+        input.type = "checkbox";
+        input.checked = config.default;
+        if (config.onChange) {
+          input.onchange = () => {
+            print("lol");
+            config.onChange(values);
+          };
+        }
+        break;
+      case "range":
+        input = document.createElement("input");
+        input.type = "range";
+        input.min = config.min;
+        input.max = config.max;
+        input.value = config.default || 0;
+        if (config.showValue) {
+          const valueLabel = document.createElement("span");
+          valueLabel.innerText = config.default || 0;
+          input.addEventListener("input", () => {
+            valueLabel.innerText = input.value;
+          });
+          wrapper.appendChild(valueLabel);
+        }
+        if (config.onChange) {
+          input.onchange = () => config.onChange(values);
+        }
+        break;
+    }
+
+    wrapper.appendChild(input);
+    return wrapper;
+  }
+
+  Object.keys(inputObject).forEach((key) => {
+    const config = inputObject[key];
+    values[key] = config.default || "";
+    const inputElement = createInput(key, config);
+    form.appendChild(inputElement);
+  });
+
+  return { form, values };
+}

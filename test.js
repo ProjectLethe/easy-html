@@ -49,6 +49,7 @@ const inputObj = {
       max: 100,
       showValue: true,
       description: "How old are you?",
+      onChange: () => console.log("NumNum")
     },
   };
   

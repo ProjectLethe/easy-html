@@ -135,6 +135,13 @@ export function createDialog(inputObject) {
   const form = document.createElement("div");
   const values = {};
 
+  function onInputChange(key, value, onChangeFunction) {
+    values[key] = value;
+    if (onChangeFunction != undefined) {
+      onChangeFunction(values);
+    }
+  }
+
   function createInput(key, config) {
     const wrapper = document.createElement("div");
     const label = document.createElement("label");
@@ -149,34 +156,30 @@ export function createDialog(inputObject) {
         dialogElement.maxLength = config.length;
         dialogElement.placeholder = config.placeholder || "";
         dialogElement.value = config.default || "";
-        if (config.onChange) {
-          dialogElement.onchange = () => config.onChange(values);
-        }
+        dialogElement.onchange = () =>
+          onInputChange(key, dialogElement.value, config.onChange);
         break;
       case "textarea":
         dialogElement = document.createElement("textarea");
         dialogElement.maxLength = config.length;
         dialogElement.placeholder = config.placeholder || "";
         dialogElement.value = config.default || "";
-        if (config.onChange) {
-          dialogElement.onchange = () => config.onChange(values);
-        }
+        dialogElement.onchange = () =>
+          onInputChange(key, dialogElement.value, config.onChange);
         dialogElement.style.resize = "none";
         break;
       case "button":
         dialogElement = document.createElement("button");
         dialogElement.innerText = config.description;
-        if (config.onChange) {
-          dialogElement.addEventListener("click", () => print("hello"));
-        }
+        dialogElement.onchange = () =>
+          onInputChange(key, dialogElement.value, config.onChange);
         break;
       case "switch":
         dialogElement = document.createElement("input");
         dialogElement.type = "checkbox";
         dialogElement.checked = config.default;
-        if (config.onChange) {
-          dialogElement.onchange = () => config.onChange(values);
-        }
+        dialogElement.onchange = () =>
+          onInputChange(key, dialogElement.value, config.onChange);
         break;
       case "dropdown":
         dialogElement = document.createElement("select");
@@ -187,9 +190,8 @@ export function createDialog(inputObject) {
           dialogElement.appendChild(option);
         });
         dialogElement.value = config.default;
-        if (config.onChange) {
-          dialogElement.onchange = () => config.onChange(values);
-        }
+        dialogElement.onchange = () =>
+          onInputChange(key, dialogElement.value, config.onChange);
         break;
       case "number":
         dialogElement = document.createElement("input");
@@ -197,20 +199,15 @@ export function createDialog(inputObject) {
         dialogElement.min = config.min;
         dialogElement.max = config.max;
         dialogElement.value = config.default || 0;
-        if (config.onChange) {
-          dialogElement.onchange = () => config.onChange(values);
-        }
+        dialogElement.onchange = () =>
+          onInputChange(key, dialogElement.value, config.onChange);
         break;
       case "checkbox":
         dialogElement = document.createElement("input");
         dialogElement.type = "checkbox";
         dialogElement.checked = config.default;
-        if (config.onChange) {
-          dialogElement.onchange = () => {
-            print("lol");
-            config.onChange(values);
-          };
-        }
+        dialogElement.onchange = () =>
+          onInputChange(key, dialogElement.value, config.onChange);
         break;
       case "range":
         dialogElement = document.createElement("span");
@@ -229,9 +226,8 @@ export function createDialog(inputObject) {
           });
           dialogElement.appendChild(valueLabel);
         }
-        if (config.onChange) {
-          input.onchange = () => config.onChange(values);
-        }
+        input.onchange = () =>
+          onInputChange(key, input.value, config.onChange);
         break;
     }
 

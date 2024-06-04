@@ -131,7 +131,7 @@ function updateEzFor(ezForElemens) {
   }
 }
 
-export function createDialog(inputObject) {
+export function createDialog(inputList) {
   const form = document.createElement("div");
   const values = {};
 
@@ -142,11 +142,15 @@ export function createDialog(inputObject) {
     }
   }
 
-  function createInput(key, config) {
+  function createInput(config) {
     const wrapper = document.createElement("div");
-    const label = document.createElement("label");
-    label.innerText = config.description;
-    wrapper.appendChild(label);
+    const key = config.id;
+
+    if(config.description != undefined && config.type != "button") {
+      const label = document.createElement("label");
+      label.innerText = config.description;
+      wrapper.appendChild(label);
+    }
 
     let dialogElement;
     switch (config.type) {
@@ -226,20 +230,20 @@ export function createDialog(inputObject) {
           });
           dialogElement.appendChild(valueLabel);
         }
-        input.onchange = () =>
-          onInputChange(key, input.value, config.onChange);
+        input.onchange = () => onInputChange(key, input.value, config.onChange);
         break;
     }
-
     wrapper.appendChild(dialogElement);
     return wrapper;
   }
 
-  Object.keys(inputObject).forEach((key) => {
-    const config = inputObject[key];
-    values[key] = config.default || "";
-    const inputElement = createInput(key, config);
-    form.appendChild(inputElement);
+  inputList.forEach((config) => {
+    if (config.id && config.type) {
+      const key = config.id;
+      values[key] = config.default || "";
+      const inputElement = createInput(config);
+      form.appendChild(inputElement);
+    }
   });
 
   return { form, values };

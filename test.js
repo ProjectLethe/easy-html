@@ -1,7 +1,7 @@
 import {setEzVariables, createDialog} from "./easyHtml.js"
 
 setEzVariables({lol4: "This is a Test"});
-setEzVariables({lol1: true, theList: ["1", "2", "3"]});
+setEzVariables({lol1: false, theList: ["1", "2", "3"]});
 
 const inputObj = {
     button1id: {

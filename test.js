@@ -1,4 +1,4 @@
-import { setEzVariables, createDialog } from "./easyHtml.js";
+import { setEzVariables, createDialog, createSingleInput } from "./easyHtml.js";
 
 setEzVariables({ lol4: "This is a Test" });
 setEzVariables({ lol1: true, theList: ["1", "2", "3"] });
@@ -55,10 +55,20 @@ const inputObj = [
     max: 100,
     showValue: true,
     description: "How old are you?",
-    onChange: () => console.log("NumNum"),
+    onChange: () => console.log("NumNum1 " + values.range),
   },
 ];
 
 // Anwendung der Funktion
-const { form, values } = createDialog(inputObj);
-document.getElementById("lol").appendChild(form);
+const { dialogDiv, values } = createDialog(inputObj);
+const singleInput = createSingleInput({
+  id: "range",
+  type: "range",
+  min: 0,
+  max: 100,
+  showValue: true,
+  description: "How old are you?",
+  onChange: (value) => console.log("NumNum2 " + value),
+});
+document.getElementById("lol").appendChild(dialogDiv);
+document.getElementById("lol").appendChild(singleInput);

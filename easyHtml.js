@@ -409,6 +409,7 @@ export class EzDropdownElement extends EzInputAbstractElement {
 }
 
 export class EzNumberElement extends EzInputAbstractElement {
+  //TODO: fix noInt error
   constructor(config) {
     super(config);
     if (config.min > config.max) {

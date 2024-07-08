@@ -131,127 +131,424 @@ function updateEzFor(ezForElemens) {
   }
 }
 
-export function createDialog(inputList) {
-  const dialogDiv = document.createElement("div");
-  const values = {};
+export class EzDialog {
+  constructor(config, elementsObj = {}) {
+    this.elements = elementsObj;
+    this._htmlElement = document.createElement("div");
 
-  const onInputChange = function (key, value, onChangeFunction) {
-    values[key] = value;
-    if (onChangeFunction != undefined) {
-      onChangeFunction(values);
-    }
-  };
+    //TODO: add sections
 
-  inputList.forEach((config) => {
-    if (config.id && config.type) {
-      const key = config.id;
-      values[key] = config.default || "";
-      const inputElement = createInput(config, onInputChange);
-      dialogDiv.appendChild(inputElement);
-    }
-  });
-
-  return { dialogDiv, values };
-}
-
-export function createSingleInput(config) {
-  const onInputChange = function (key, value, onChangeFunction) {
-    onChangeFunction(value);
-  };
-  return createInput(config, onInputChange);
-}
-
-function createInput(config, onInputChange) {
-  const wrapper = document.createElement("div");
-  const key = config.id;
-
-  if (config.description != undefined && config.type != "button") {
-    const label = document.createElement("label");
-    label.innerText = config.description;
-    wrapper.appendChild(label);
-  }
-
-  let dialogElement;
-  switch (config.type) {
-    case "text":
-      dialogElement = document.createElement("input");
-      dialogElement.type = "text";
-      dialogElement.maxLength = config.length;
-      dialogElement.placeholder = config.placeholder || "";
-      dialogElement.value = config.default || "";
-      dialogElement.onchange = () =>
-        onInputChange(key, dialogElement.value, config.onChange);
-      break;
-    case "textarea":
-      dialogElement = document.createElement("textarea");
-      dialogElement.maxLength = config.length;
-      dialogElement.placeholder = config.placeholder || "";
-      dialogElement.value = config.default || "";
-      dialogElement.onchange = () =>
-        onInputChange(key, dialogElement.value, config.onChange);
-      dialogElement.style.resize = "none";
-      break;
-    case "button":
-      dialogElement = document.createElement("button");
-      dialogElement.innerText = config.description;
-      dialogElement.onclick = () =>
-        onInputChange(key, dialogElement.value, config.onChange);
-      break;
-    case "switch":
-      dialogElement = document.createElement("input");
-      dialogElement.type = "checkbox";
-      dialogElement.checked = config.default;
-      dialogElement.onchange = () =>
-        onInputChange(key, dialogElement.value, config.onChange);
-      break;
-    case "dropdown":
-      dialogElement = document.createElement("select");
-      config.choices.forEach((choice) => {
-        const option = document.createElement("option");
-        option.value = choice;
-        option.text = choice;
-        dialogElement.appendChild(option);
-      });
-      dialogElement.value = config.default;
-      dialogElement.onchange = () =>
-        onInputChange(key, dialogElement.value, config.onChange);
-      break;
-    case "number":
-      dialogElement = document.createElement("input");
-      dialogElement.type = "number";
-      dialogElement.min = config.min;
-      dialogElement.max = config.max;
-      dialogElement.value = config.default || 0;
-      dialogElement.onchange = () =>
-        onInputChange(key, dialogElement.value, config.onChange);
-      break;
-    case "checkbox":
-      dialogElement = document.createElement("input");
-      dialogElement.type = "checkbox";
-      dialogElement.checked = config.default;
-      dialogElement.onchange = () =>
-        onInputChange(key, dialogElement.value, config.onChange);
-      break;
-    case "range":
-      dialogElement = document.createElement("span");
-
-      const input = document.createElement("input");
-      input.type = "range";
-      input.min = config.min;
-      input.max = config.max;
-      input.value = config.default || 0;
-      dialogElement.appendChild(input);
-      if (config.showValue) {
-        const valueLabel = document.createElement("span");
-        valueLabel.innerText = config.default || 0;
-        input.addEventListener("input", () => {
-          valueLabel.innerText = input.value;
-        });
-        dialogElement.appendChild(valueLabel);
+    config.forEach((config) => {
+      if (config.id && config.type) {
+        let dialogElement;
+        switch (config.type) {
+          case "text":
+            dialogElement = new EzTextElement(config);
+            break;
+          case "textarea":
+            dialogElement = new EzTextAreaElement(config);
+            break;
+          case "button":
+            dialogElement = new EzButtonElement(config);
+            break;
+          case "dropdown":
+            dialogElement = new EzDropdownElement(config);
+            break;
+          case "number":
+            dialogElement = new EzNumberElement(config);
+            break;
+          case "checkbox":
+            dialogElement = new EzCheckboxElement(config);
+            break;
+          default:
+            throw new Error(`type ${config.type} is not supported`);
+        }
+        this._htmlElement.appendChild(dialogElement._htmlElement);
+        this.elements[config.id] = dialogElement;
       }
-      input.onchange = () => onInputChange(key, input.value, config.onChange);
-      break;
+    });
   }
-  wrapper.appendChild(dialogElement);
-  return wrapper;
+}
+
+class EzInputAbstractElement {
+  constructor(config) {
+    this._type = config.type;
+    this._description = config.description;
+    this._value = config.default;
+    this._htmlElement = document.createElement("div");
+
+    this._callbacks = [];
+    this._label = document.createElement("label");
+    this._label.innerText = config.description;
+    this._errorLabel = document.createElement("label");
+    this._errorLabel.style.color = "red";
+    this.error = config.error || "";
+  }
+
+  set type(value) {
+    throw new Error("type is read-only");
+  }
+  get type() {
+    return this._type;
+  }
+
+  set description(value) {
+    this._label.innerText = value;
+    this.description = value;
+  }
+  get description() {
+    return this._description;
+  }
+
+  set error(value) {
+    this._errorLabel.innerText = value;
+    this._errorLabel.style.display = value && value != "" ? "" : "none";
+  }
+  get error() {
+    return this._errorLabel.innerText || "";
+  }
+
+  set value(value) {
+    this._value = value;
+    this._callbacks.forEach((callback) => callback(value));
+  }
+  get value() {
+    return this._value;
+  }
+
+  subscribe(callbackFunction) {
+    if (typeof callbackFunction !== "function") {
+      throw new Error("parameter of subscribe must be a function");
+    }
+    this._callbacks.push(callbackFunction);
+  }
+  unsubscribe(callbackFunction) {
+    if (callbackFunction === undefined) {
+      this._callbacks = [];
+      return;
+    }
+    if (typeof callbackFunction !== "function") {
+      throw new Error("parameter of unsubscribe must be a function");
+    }
+    this._callbacks = this._callbacks.filter(
+      (callback) => callback !== callbackFunction
+    );
+  }
+}
+
+class EzTextAbstractElement extends EzInputAbstractElement {
+  constructor(config) {
+    super(config);
+    this._regexStr = "";
+    this._regexError = config.regexError;
+    this._value = config.default || "";
+    this.regex = config.regex;
+  }
+  set value(value) {
+    if (this._inputElement.value !== value) {
+      this._inputElement.value = value;
+    }
+    if (this._regex != undefined && this._regex.test(value) == false) {
+      this.error =
+        this._regexError || `Input must match regex ${this._regexStr}`;
+    } else {
+      this.error = "";
+    }
+    this._value = value;
+    this._callbacks.forEach((callback) => callback(value));
+  }
+
+  set maxLength(value) {
+    this._inputElement.maxLength = value;
+  }
+  get maxLength() {
+    return this._inputElement.maxLength;
+  }
+
+  set placeholder(value) {
+    this._inputElement.placeholder = value;
+  }
+  get placeholder() {
+    return this._inputElement.placeholder;
+  }
+
+  set regex(value) {
+    if (value == undefined || value == "") {
+      this._regex = undefined;
+      this._regexStr = "";
+      return;
+    }
+    try {
+      this._regex = new RegExp(`^${value}+$`, "m");
+    } catch (e) {
+      throw new Error(`submitted regex (${value}) must be valid`);
+    }
+    this.regexStr = value;
+  }
+  get regex() {
+    return this._regexStr;
+  }
+
+  set regexError(value) {
+    this._regexError = value;
+    if (this._regex != undefined && this._regex.test(value) == false) {
+      this.error =
+        this._regexError || `Input must match regex ${this._regexStr}`;
+    } else {
+      this.error = "";
+    }
+  }
+  get regexError() {
+    return this._regexError;
+  }
+}
+
+export class EzTextElement extends EzTextAbstractElement {
+  constructor(config) {
+    super(config);
+
+    this._inputElement = document.createElement("input");
+    this._inputElement.type = "text";
+    this._inputElement.maxLength = config.length;
+    this._inputElement.placeholder = config.placeholder || "";
+    this._inputElement.value = config.default || "";
+    this._inputElement.onchange = () => (this.value = this._inputElement.value);
+
+    this._htmlElement.appendChild(this._label);
+    this._htmlElement.appendChild(this._inputElement);
+    this._htmlElement.appendChild(this._errorLabel);
+  }
+}
+
+export class EzTextAreaElement extends EzTextAbstractElement {
+  constructor(config) {
+    super(config);
+
+    this._inputElement = document.createElement("textarea");
+    this._inputElement.maxLength = config.length;
+    this._inputElement.placeholder = config.placeholder || "";
+    this._inputElement.value = config.default || "";
+    this._inputElement.onchange = () => (this.value = this._inputElement.value);
+    this._inputElement.style.resize = "none";
+
+    this._htmlElement.appendChild(this._label);
+    this._htmlElement.appendChild(this._inputElement);
+    this._htmlElement.appendChild(this._errorLabel);
+  }
+}
+
+export class EzButtonElement extends EzInputAbstractElement {
+  constructor(config) {
+    super(config);
+
+    this._inputElement = document.createElement("button");
+    this._inputElement.innerText = config.description;
+    this._inputElement.onclick = () =>
+      this._callbacks.forEach((callback) => callback());
+
+    this._htmlElement.appendChild(this._inputElement);
+  }
+  set value(value) {
+    return;
+  }
+  get value() {
+    return undefined;
+  }
+}
+
+export class EzDropdownElement extends EzInputAbstractElement {
+  constructor(config) {
+    super(config);
+    this._value = config.default;
+
+    if (Array.isArray(config.choices) === false) {
+      throw new Error(`choices must be an array not ${config.choices}`);
+    }
+    this._inputElement = document.createElement("select");
+    this._choices = config.choices;
+    this._choices.forEach((choice) => {
+      const option = document.createElement("option");
+      option.value = choice;
+      option.text = choice;
+      this._inputElement.appendChild(option);
+    });
+    this._inputElement.value = config.default;
+    this._inputElement.onchange = () => (this.value = this._inputElement.value);
+
+    this._htmlElement.appendChild(this._label);
+    this._htmlElement.appendChild(this._inputElement);
+    this._htmlElement.appendChild(this._errorLabel);
+  }
+
+  set value(value) {
+    if (this._inputElement.value !== value) {
+      this._inputElement.value = value;
+    }
+    this._value = value;
+    this._callbacks.forEach((callback) => callback(value));
+  }
+  get value() {
+    return this._inputElement.value;
+  }
+
+  set choices(value) {
+    this._choices;
+    while (this._inputElement.firstChild) {
+      this._inputElement.removeChild(this._inputElement.firstChild);
+    }
+    value.forEach((choice) => {
+      const option = document.createElement("option");
+      option.value = choice;
+      option.text = choice;
+      this._inputElement.appendChild(option);
+    });
+  }
+  get choices() {
+    return this._choices;
+  }
+}
+
+export class EzNumberElement extends EzInputAbstractElement {
+  constructor(config) {
+    super(config);
+    if (config.min > config.max) {
+      throw new Error(
+        `min (${config.min}) must be smaller than max (${config.max})`
+      );
+    }
+    if (config.default !== undefined && isNaN(config.default)) {
+      throw new Error(`default value (${config.default}) must be vallid`);
+    }
+    this._isRange = config.isRange;
+    this._onlyInt = config.onlyInt === undefined || config.onlyInt === true;
+    this._rangeElement = document.createElement("input");
+    this._rangeElement.type = "range";
+    this._rangeElement.min = config.min;
+    this._rangeElement.max = config.max;
+    this._rangeElement.value = config.default || 0;
+    this._valueLabel = document.createElement("span");
+    this._valueLabel.innerText = config.default || 0;
+    this._rangeElement.onchange = () => (this.value = this._rangeElement.value);
+    this._rangeElement.addEventListener("input", () => {
+      this._valueLabel.innerText = this._rangeElement.value;
+    });
+
+    this._inputElement = document.createElement("input");
+    this._inputElement.type = "number";
+    this._inputElement.min = config.min;
+    this._inputElement.max = config.max;
+    this._inputElement.value = config.default || 0;
+    this._inputElement.onchange = () => (this.value = this._inputElement.value);
+
+    this._htmlElement.appendChild(this._label);
+    if (config.isRange) {
+      if (
+        isNaN(config.default) ||
+        config.default > config.max ||
+        config.default < config.min
+      ) {
+        throw new Error(`default value (${config.default}) must be vallid`);
+      }
+      this._htmlElement.appendChild(this._rangeElement);
+      this._htmlElement.appendChild(this._valueLabel);
+    } else {
+      this._htmlElement.appendChild(this._inputElement);
+    }
+    this._htmlElement.appendChild(this._errorLabel);
+  }
+
+  set min(value) {
+    if (isNaN(value)) {
+      throw new Error(`min (${value}) must be a number`);
+    }
+    if (value > this._inputElement.max) {
+      throw new Error(
+        `min (${value}) must be smaller than max (${this._inputElement.max})`
+      );
+    }
+    if (value > this._inputElement.value) {
+      this.value = value;
+    }
+    this._inputElement.min = value;
+    this._rangeElement.min = value;
+  }
+  get min() {
+    return this._inputElement.min;
+  }
+
+  set max(value) {
+    if (isNaN(value)) {
+      throw new Error(`max (${value}) must be a number`);
+    }
+    if (value < this._inputElement.min) {
+      throw new Error(
+        `max (${value}) must be greater than min (${this._inputElement.min})`
+      );
+    }
+    if (value < this._inputElement.value) {
+      this.value = value;
+    }
+    this._inputElement.max = value;
+    this._rangeElement.max = value;
+  }
+  get max() {
+    return this._inputElement.max;
+  }
+
+  set value(value) {
+    if (this._onlyInt && !Number.isInteger(value)) {
+      this.error = "Input must be an integer";
+      console.log("NoInt");
+      return;
+    }
+    if (value == "" || Number.isNaN(value)) {
+      this.error = "Input must be a number";
+      console.log("NoNum");
+      return;
+    }
+    if (this._inputElement.value !== value) {
+      this._inputElement.value = value;
+      this._rangeElement.value = value;
+    }
+    this._value = value;
+    this._callbacks.forEach((callback) => callback(value));
+  }
+  get value() {
+    return this._inputElement.value;
+  }
+
+  set isRange(value) {
+    throw new Error("isRange is read-only");
+  }
+  get isRange() {
+    return this._isRange;
+  }
+}
+
+export class EzCheckboxElement extends EzInputAbstractElement {
+  //TODO: add switch
+  constructor(config) {
+    super(config);
+
+    this._inputElement = document.createElement("input");
+    this._inputElement.type = "checkbox";
+    this._inputElement.checked = config.default;
+    this._inputElement.onchange = () =>
+      (this.value = this._inputElement.checked);
+
+    this._htmlElement.appendChild(this._label);
+    this._htmlElement.appendChild(this._inputElement);
+    this._htmlElement.appendChild(this._errorLabel);
+  }
+
+  set value(value) {
+    if (this._inputElement.checked !== value) {
+      this._inputElement.checked = value;
+    }
+    this._value = value;
+    this._callbacks.forEach((callback) => callback(value));
+  }
+  get value() {
+    return this._inputElement.checked;
+  }
 }

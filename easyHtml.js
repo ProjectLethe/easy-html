@@ -409,7 +409,6 @@ export class EzDropdownElement extends EzInputAbstractElement {
 }
 
 export class EzNumberElement extends EzInputAbstractElement {
-  //TODO: fix noInt error
   constructor(config) {
     super(config);
     if (config.min > config.max) {
@@ -497,7 +496,7 @@ export class EzNumberElement extends EzInputAbstractElement {
   }
 
   set value(value) {
-    if (this._onlyInt && !Number.isInteger(value)) {
+    if (this._onlyInt === true && !Number.isInteger(Number(value))) {
       this.error = "Input must be an integer";
       console.log("NoInt");
       return;
@@ -507,6 +506,7 @@ export class EzNumberElement extends EzInputAbstractElement {
       console.log("NoNum");
       return;
     }
+    value = Number(value);
     if (this._inputElement.value !== value) {
       this._inputElement.value = value;
       this._rangeElement.value = value;

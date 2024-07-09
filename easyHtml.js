@@ -135,6 +135,27 @@ export function ezRemoveChildren(element) {
   }
 }
 
+function createDialogElement(config, elements, level) {
+  switch (config.type) {
+    case "text":
+      return new EzTextElement(config);
+    case "textarea":
+      return new EzTextAreaElement(config);
+    case "button":
+      return new EzButtonElement(config);
+    case "dropdown":
+      return new EzDropdownElement(config);
+    case "number":
+      return new EzNumberElement(config);
+    case "checkbox":
+      return new EzCheckboxElement(config);
+    case "section":
+      return new EzSectionElement(config, elements, level);
+    default:
+      throw new Error(`type ${config.type} is not supported`);
+  }
+}
+
 export class EzDialog {
   constructor(config, elementsObj = {}) {
     this.elements = elementsObj;
@@ -146,63 +167,57 @@ export class EzDialog {
       "flex-col",
       "w-fit"
     );
+    //TODO Add obj config with headline and multiple step dialog
+    let configList = config;
+    if (!Array.isArray(config)) {
+      throw new Error("config must be an array");
+    }
 
-    //TODO: add sections
-
-    config.forEach((config) => {
-      if (config.id && config.type) {
-        let dialogElement;
-        switch (config.type) {
-          case "text":
-            dialogElement = new EzTextElement(config);
-            break;
-          case "textarea":
-            dialogElement = new EzTextAreaElement(config);
-            break;
-          case "button":
-            dialogElement = new EzButtonElement(config);
-            break;
-          case "dropdown":
-            dialogElement = new EzDropdownElement(config);
-            break;
-          case "number":
-            dialogElement = new EzNumberElement(config);
-            break;
-          case "checkbox":
-            dialogElement = new EzCheckboxElement(config);
-            break;
-          default:
-            throw new Error(`type ${config.type} is not supported`);
-        }
-        this._htmlElement.appendChild(dialogElement._htmlElement);
-        this.elements[config.id] = dialogElement;
+    configList.forEach((elementConfig) => {
+      if (elementConfig.id && elementConfig.type) {
+        this.elements[elementConfig.id] = createDialogElement(elementConfig, this.elements, 2);
+        this._htmlElement.appendChild(this.elements[elementConfig.id].htmlElement);
       }
     });
   }
+
+  set htmlElement(value) {
+    throw new Error("htmlElement is read-only");
+  }
+  get htmlElement() {
+    return this._htmlElement;
+  }
 }
 
-class EzInputAbstractElement {
+class EzAbstractElement {
   constructor(config) {
     this._type = config.type;
-    this._description = config.description;
+    this._description = config.description || "";
     this._value = config.default;
 
     this._htmlElement = document.createElement("div");
-    this._htmlElement.classList.add("ez-input", "m-3", "flex", "items-center");
-    this._inputContainer = document.createElement("label");
-    this._inputContainer.classList.add("w-full", "block");
-    this.isVisible = config.isVisible
+    this._htmlElement.classList.add("ez-input", "m-3", "flex", "items-end");
+    this._childrenContainer = document.createElement("label");
+    this._childrenContainer.classList.add("w-full", "block");
+    this.isVisible = config.isVisible;
 
     this._callbacks = [];
     this._descriptionElement = document.createElement("span");
     this._descriptionElement.classList.add("w-full", "block", "text-xs");
-    this._descriptionElement.innerText = config.description;
+    this._descriptionElement.innerText = this._description || "";
     this._errorLabel = document.createElement("span");
     this._errorLabel.classList.add("w-full", "text-error");
     this.error = config.error || "";
     this._warningLabel = document.createElement("span");
     this._warningLabel.classList.add("w-full", "text-warning");
     this.warning = config.warning || "";
+  }
+
+  set htmlElement(value) {
+    throw new Error("htmlElement is read-only");
+  }
+  get htmlElement() {
+    return this._htmlElement;
   }
 
   set type(value) {
@@ -221,17 +236,20 @@ class EzInputAbstractElement {
   }
 
   set isVisible(value = true) {
-    if(value === this._isVisible){
+    if (value === this._isVisible) {
       return;
     }
-    if(value) {
-      this._htmlElement.appendChild(this._inputContainer);
+    if (value) {
+      this._htmlElement.appendChild(this._childrenContainer);
       this._htmlElement.classList.remove("hidden");
-    }else {
+    } else {
       ezRemoveChildren(this._htmlElement);
       this._htmlElement.classList.add("hidden");
     }
     this._isVisible = value;
+  }
+  get isVisible() {
+    return this._isVisible;
   }
 
   set error(value) {
@@ -278,7 +296,7 @@ class EzInputAbstractElement {
   }
 }
 
-class EzTextAbstractElement extends EzInputAbstractElement {
+class EzTextAbstractElement extends EzAbstractElement {
   constructor(config) {
     super(config);
     this._regexStr = "";
@@ -362,10 +380,10 @@ export class EzTextElement extends EzTextAbstractElement {
       "input-bordered"
     );
 
-    this._inputContainer.appendChild(this._descriptionElement);
-    this._inputContainer.appendChild(this._inputElement);
-    this._inputContainer.appendChild(this._errorLabel);
-    this._inputContainer.appendChild(this._warningLabel);
+    this._childrenContainer.appendChild(this._descriptionElement);
+    this._childrenContainer.appendChild(this._inputElement);
+    this._childrenContainer.appendChild(this._errorLabel);
+    this._childrenContainer.appendChild(this._warningLabel);
   }
 }
 
@@ -386,14 +404,14 @@ export class EzTextAreaElement extends EzTextAbstractElement {
       "textarea-bordered"
     );
 
-    this._inputContainer.appendChild(this._descriptionElement);
-    this._inputContainer.appendChild(this._inputElement);
-    this._inputContainer.appendChild(this._errorLabel);
-    this._inputContainer.appendChild(this._warningLabel);
+    this._childrenContainer.appendChild(this._descriptionElement);
+    this._childrenContainer.appendChild(this._inputElement);
+    this._childrenContainer.appendChild(this._errorLabel);
+    this._childrenContainer.appendChild(this._warningLabel);
   }
 }
 
-export class EzButtonElement extends EzInputAbstractElement {
+export class EzButtonElement extends EzAbstractElement {
   constructor(config) {
     super(config);
 
@@ -403,7 +421,7 @@ export class EzButtonElement extends EzInputAbstractElement {
       this._callbacks.forEach((callback) => callback());
     this._inputElement.classList.add("block", "btn", "btn-primary");
 
-    this._inputContainer.appendChild(this._inputElement);
+    this._childrenContainer.appendChild(this._inputElement);
   }
   set value(value) {
     return;
@@ -413,7 +431,7 @@ export class EzButtonElement extends EzInputAbstractElement {
   }
 }
 
-export class EzDropdownElement extends EzInputAbstractElement {
+export class EzDropdownElement extends EzAbstractElement {
   constructor(config) {
     super(config);
     this._value = config.default;
@@ -438,10 +456,10 @@ export class EzDropdownElement extends EzInputAbstractElement {
       "select-bordered"
     );
 
-    this._inputContainer.appendChild(this._descriptionElement);
-    this._inputContainer.appendChild(this._inputElement);
-    this._inputContainer.appendChild(this._errorLabel);
-    this._inputContainer.appendChild(this._warningLabel);
+    this._childrenContainer.appendChild(this._descriptionElement);
+    this._childrenContainer.appendChild(this._inputElement);
+    this._childrenContainer.appendChild(this._errorLabel);
+    this._childrenContainer.appendChild(this._warningLabel);
   }
 
   set value(value) {
@@ -470,7 +488,7 @@ export class EzDropdownElement extends EzInputAbstractElement {
   }
 }
 
-export class EzNumberElement extends EzInputAbstractElement {
+export class EzNumberElement extends EzAbstractElement {
   constructor(config) {
     super(config);
     if (config.min > config.max) {
@@ -511,7 +529,7 @@ export class EzNumberElement extends EzInputAbstractElement {
       "input-bordered"
     );
 
-    this._inputContainer.appendChild(this._descriptionElement);
+    this._childrenContainer.appendChild(this._descriptionElement);
     if (config.isRange) {
       if (
         isNaN(config.default) ||
@@ -520,13 +538,13 @@ export class EzNumberElement extends EzInputAbstractElement {
       ) {
         throw new Error(`default value (${config.default}) must be vallid`);
       }
-      this._inputContainer.appendChild(this._rangeElement);
-      this._inputContainer.appendChild(this._valueLabel);
+      this._childrenContainer.appendChild(this._rangeElement);
+      this._childrenContainer.appendChild(this._valueLabel);
     } else {
-      this._inputContainer.appendChild(this._inputElement);
+      this._childrenContainer.appendChild(this._inputElement);
     }
-    this._inputContainer.appendChild(this._errorLabel);
-    this._inputContainer.appendChild(this._warningLabel);
+    this._childrenContainer.appendChild(this._errorLabel);
+    this._childrenContainer.appendChild(this._warningLabel);
   }
 
   set min(value) {
@@ -608,7 +626,7 @@ export class EzNumberElement extends EzInputAbstractElement {
   }
 }
 
-export class EzCheckboxElement extends EzInputAbstractElement {
+export class EzCheckboxElement extends EzAbstractElement {
   constructor(config) {
     super(config);
 
@@ -621,12 +639,12 @@ export class EzCheckboxElement extends EzInputAbstractElement {
     this.isSwitch = config.isSwitch === true;
     this._descriptionElement.classList.add("text-base", "inline", "mr-2");
     this._descriptionElement.classList.remove("w-full");
-    this._inputContainer.classList.add("flex", "items-center");
+    this._childrenContainer.classList.add("flex", "items-center");
 
-    this._inputContainer.appendChild(this._descriptionElement);
-    this._inputContainer.appendChild(this._inputElement);
-    this._inputContainer.appendChild(this._errorLabel);
-    this._inputContainer.appendChild(this._warningLabel);
+    this._childrenContainer.appendChild(this._descriptionElement);
+    this._childrenContainer.appendChild(this._inputElement);
+    this._childrenContainer.appendChild(this._errorLabel);
+    this._childrenContainer.appendChild(this._warningLabel);
   }
 
   set isSwitch(value) {
@@ -652,5 +670,46 @@ export class EzCheckboxElement extends EzInputAbstractElement {
   }
   get value() {
     return this._inputElement.checked;
+  }
+}
+export class EzSectionElement extends EzAbstractElement {
+  constructor(config, elements, level) {
+    super(config);
+    this._htmlElement.classList.add("ez-section");
+    this._childrenContainer = document.createElement("div");
+    this._header = document.createElement("div");
+    if (config.foldable) {
+      this._childrenContainer = document.createElement("details");
+      this._header = document.createElement("summary");
+      this._header.classList.add("btn", "block", "w-full");
+    }
+    if (level < 1) {
+      throw new Error(`level must be between 1 and 6 not ${level}`);
+    }
+    level = level > 6 ? 6 : level;
+    this._headline = document.createElement(`h${level}`);
+    this._headline.innerText = config.headline || "";
+
+    this._childrenContainer.appendChild(this._header);
+    this._childrenContainer.appendChild(this._headline);
+    this._childrenContainer.appendChild(this._descriptionElement);
+    this._childrenContainer.appendChild(this._errorLabel);
+    this._childrenContainer.appendChild(this._warningLabel);
+
+    configList.forEach((elementConfig) => {
+      if (elementConfig.id && elementConfig.type) {
+        elements[elementConfig.id] = createDialogElement(elementConfig, elements, level+1);
+        this._htmlElement.appendChild(elements[elementConfig.id].htmlElement);
+      }
+    });
+
+    this.isVisible = config.isVisible;
+  }
+
+  set headline(value) {
+    this._headline.innerText = value;
+  }
+  get headline() {
+    return this._headline.innerText;
   }
 }

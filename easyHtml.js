@@ -135,6 +135,13 @@ export class EzDialog {
   constructor(config, elementsObj = {}) {
     this.elements = elementsObj;
     this._htmlElement = document.createElement("div");
+    this._htmlElement.classList.add(
+      "ez-dialog",
+      "p-3",
+      "flex",
+      "flex-col",
+      "w-fit"
+    );
 
     //TODO: add sections
 
@@ -176,13 +183,21 @@ class EzInputAbstractElement {
     this._description = config.description;
     this._value = config.default;
     this._htmlElement = document.createElement("div");
+    this._htmlElement.classList.add("ez-input", "m-3", "flex", "items-center");
+    this._inputContainer = document.createElement("label");
+    this._inputContainer.classList.add("w-full", "block");
+    this._htmlElement.appendChild(this._inputContainer);
 
     this._callbacks = [];
-    this._label = document.createElement("label");
-    this._label.innerText = config.description;
-    this._errorLabel = document.createElement("label");
-    this._errorLabel.style.color = "red";
+    this._descriptionElement = document.createElement("span");
+    this._descriptionElement.classList.add("w-full", "block", "text-xs");
+    this._descriptionElement.innerText = config.description;
+    this._errorLabel = document.createElement("span");
+    this._errorLabel.classList.add("w-full", "text-error");
     this.error = config.error || "";
+    this._warningLabel = document.createElement("span");
+    this._warningLabel.classList.add("w-full", "text-warning");
+    this.warning = config.warning || "";
   }
 
   set type(value) {
@@ -193,7 +208,7 @@ class EzInputAbstractElement {
   }
 
   set description(value) {
-    this._label.innerText = value;
+    this._descriptionElement.innerText = value;
     this.description = value;
   }
   get description() {
@@ -202,10 +217,18 @@ class EzInputAbstractElement {
 
   set error(value) {
     this._errorLabel.innerText = value;
-    this._errorLabel.style.display = value && value != "" ? "" : "none";
+    this._errorLabel.style.display = value && value != "" ? "block" : "none";
   }
   get error() {
     return this._errorLabel.innerText || "";
+  }
+
+  set warning(value) {
+    this._warningLabel.innerText = value;
+    this._warningLabel.style.display = value && value != "" ? "block" : "none";
+  }
+  get warning() {
+    return this._warningLabel.innerText || "";
   }
 
   set value(value) {
@@ -313,10 +336,17 @@ export class EzTextElement extends EzTextAbstractElement {
     this._inputElement.placeholder = config.placeholder || "";
     this._inputElement.value = config.default || "";
     this._inputElement.onchange = () => (this.value = this._inputElement.value);
+    this._inputElement.classList.add(
+      "w-full",
+      "block",
+      "input",
+      "input-bordered"
+    );
 
-    this._htmlElement.appendChild(this._label);
-    this._htmlElement.appendChild(this._inputElement);
-    this._htmlElement.appendChild(this._errorLabel);
+    this._inputContainer.appendChild(this._descriptionElement);
+    this._inputContainer.appendChild(this._inputElement);
+    this._inputContainer.appendChild(this._errorLabel);
+    this._inputContainer.appendChild(this._warningLabel);
   }
 }
 
@@ -330,10 +360,17 @@ export class EzTextAreaElement extends EzTextAbstractElement {
     this._inputElement.value = config.default || "";
     this._inputElement.onchange = () => (this.value = this._inputElement.value);
     this._inputElement.style.resize = "none";
+    this._inputElement.classList.add(
+      "w-full",
+      "block",
+      "textarea",
+      "textarea-bordered"
+    );
 
-    this._htmlElement.appendChild(this._label);
-    this._htmlElement.appendChild(this._inputElement);
-    this._htmlElement.appendChild(this._errorLabel);
+    this._inputContainer.appendChild(this._descriptionElement);
+    this._inputContainer.appendChild(this._inputElement);
+    this._inputContainer.appendChild(this._errorLabel);
+    this._inputContainer.appendChild(this._warningLabel);
   }
 }
 
@@ -345,8 +382,9 @@ export class EzButtonElement extends EzInputAbstractElement {
     this._inputElement.innerText = config.description;
     this._inputElement.onclick = () =>
       this._callbacks.forEach((callback) => callback());
+    this._inputElement.classList.add("block", "btn", "btn-primary");
 
-    this._htmlElement.appendChild(this._inputElement);
+    this._inputContainer.appendChild(this._inputElement);
   }
   set value(value) {
     return;
@@ -374,10 +412,17 @@ export class EzDropdownElement extends EzInputAbstractElement {
     });
     this._inputElement.value = config.default;
     this._inputElement.onchange = () => (this.value = this._inputElement.value);
+    this._inputElement.classList.add(
+      "w-full",
+      "block",
+      "select",
+      "select-bordered"
+    );
 
-    this._htmlElement.appendChild(this._label);
-    this._htmlElement.appendChild(this._inputElement);
-    this._htmlElement.appendChild(this._errorLabel);
+    this._inputContainer.appendChild(this._descriptionElement);
+    this._inputContainer.appendChild(this._inputElement);
+    this._inputContainer.appendChild(this._errorLabel);
+    this._inputContainer.appendChild(this._warningLabel);
   }
 
   set value(value) {
@@ -419,6 +464,8 @@ export class EzNumberElement extends EzInputAbstractElement {
     if (config.default !== undefined && isNaN(config.default)) {
       throw new Error(`default value (${config.default}) must be vallid`);
     }
+    config.default = config.default || config.min || 0;
+
     this._isRange = config.isRange;
     this._onlyInt = config.onlyInt === undefined || config.onlyInt === true;
     this._rangeElement = document.createElement("input");
@@ -432,6 +479,7 @@ export class EzNumberElement extends EzInputAbstractElement {
     this._rangeElement.addEventListener("input", () => {
       this._valueLabel.innerText = this._rangeElement.value;
     });
+    this._rangeElement.classList.add("w-full", "block", "range");
 
     this._inputElement = document.createElement("input");
     this._inputElement.type = "number";
@@ -439,8 +487,14 @@ export class EzNumberElement extends EzInputAbstractElement {
     this._inputElement.max = config.max;
     this._inputElement.value = config.default || 0;
     this._inputElement.onchange = () => (this.value = this._inputElement.value);
+    this._inputElement.classList.add(
+      "w-full",
+      "block",
+      "input",
+      "input-bordered"
+    );
 
-    this._htmlElement.appendChild(this._label);
+    this._inputContainer.appendChild(this._descriptionElement);
     if (config.isRange) {
       if (
         isNaN(config.default) ||
@@ -449,12 +503,13 @@ export class EzNumberElement extends EzInputAbstractElement {
       ) {
         throw new Error(`default value (${config.default}) must be vallid`);
       }
-      this._htmlElement.appendChild(this._rangeElement);
-      this._htmlElement.appendChild(this._valueLabel);
+      this._inputContainer.appendChild(this._rangeElement);
+      this._inputContainer.appendChild(this._valueLabel);
     } else {
-      this._htmlElement.appendChild(this._inputElement);
+      this._inputContainer.appendChild(this._inputElement);
     }
-    this._htmlElement.appendChild(this._errorLabel);
+    this._inputContainer.appendChild(this._errorLabel);
+    this._inputContainer.appendChild(this._warningLabel);
   }
 
   set min(value) {
@@ -498,15 +553,25 @@ export class EzNumberElement extends EzInputAbstractElement {
   set value(value) {
     if (this._onlyInt === true && !Number.isInteger(Number(value))) {
       this.error = "Input must be an integer";
-      console.log("NoInt");
       return;
     }
     if (value == "" || Number.isNaN(value)) {
       this.error = "Input must be a number";
-      console.log("NoNum");
       return;
     }
     value = Number(value);
+    if (value < this.min) {
+      this.value = this.min;
+      this.warning = `Input (${value}) must be greater than ${this.min}`
+      return;
+    }
+    if (value > this.max) {
+      this.value = this.max;
+      this.warning = `Input (${value}) must be smaller than ${this.max}`
+      return;
+    }
+    this.error = "";
+    this.warning = "";
     if (this._inputElement.value !== value) {
       this._inputElement.value = value;
       this._rangeElement.value = value;
@@ -527,7 +592,6 @@ export class EzNumberElement extends EzInputAbstractElement {
 }
 
 export class EzCheckboxElement extends EzInputAbstractElement {
-  //TODO: add switch
   constructor(config) {
     super(config);
 
@@ -537,9 +601,29 @@ export class EzCheckboxElement extends EzInputAbstractElement {
     this._inputElement.onchange = () =>
       (this.value = this._inputElement.checked);
 
-    this._htmlElement.appendChild(this._label);
-    this._htmlElement.appendChild(this._inputElement);
-    this._htmlElement.appendChild(this._errorLabel);
+    this.isSwitch = config.isSwitch === true;
+    this._descriptionElement.classList.add("text-base", "inline", "mr-2");
+    this._descriptionElement.classList.remove("w-full");
+    this._inputContainer.classList.add("flex", "items-center");
+
+    this._inputContainer.appendChild(this._descriptionElement);
+    this._inputContainer.appendChild(this._inputElement);
+    this._inputContainer.appendChild(this._errorLabel);
+    this._inputContainer.appendChild(this._warningLabel);
+  }
+
+  set isSwitch(value) {
+    this._isSwitch = value;
+    if (this._isSwitch) {
+      this._inputElement.classList.remove("checkbox");
+      this._inputElement.classList.add("toggle", "toggle-primary");
+    } else {
+      this._inputElement.classList.remove("toggle", "toggle-primary");
+      this._inputElement.classList.add("checkbox");
+    }
+  }
+  get isSwitch() {
+    return this._isSwitch;
   }
 
   set value(value) {

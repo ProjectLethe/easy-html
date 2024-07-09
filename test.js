@@ -7,7 +7,7 @@ const inputObj = [
   {
     id: "button1id",
     type: "button",
-    description: "Say hello",
+    description: "Say hello 2",
   },
   {
     id: "yourName",
@@ -22,18 +22,14 @@ const inputObj = [
     length: 2000,
     description: "What do you want to say",
     placeholder: "Something",
-    onChange: (values) => {
-      console.log(values.yourName + ": " + values.justATextInput);
-    },
   },
   {
     id: "areYouHappy",
     type: "checkbox",
     description: "Are you happy",
     default: false,
-    onChange: (values) => {
-      console.log("I am happy");
-    },
+    isSwitch: true,
+    
   },
   {
     id: "favSearchengine",
@@ -41,23 +37,23 @@ const inputObj = [
     description: "What is your Favorite Search Engine?",
     choices: ["Google", "DuckDuckGo", "Ecosia", "other"],
     default: "Google",
-    onChange: (values) => {
-      console.log("DugDug");
-    },
+    
   },
   {
     id: "range",
     type: "number",
-    min: 0,
+    isRange: false,
+    min: 10,
     max: 100,
+    default: 50,
     showValue: true,
     description: "How old are you?",
-    onChange: () => console.log("NumNum1 " + values.range),
   },
 ];
 
 // Anwendung der Funktion
 const dialogObj = new EzDialog(inputObj);
+console.log(dialogObj);
 document.getElementById("lol").appendChild(dialogObj._htmlElement);
 
 dialogObj.elements.favSearchengine.subscribe((value) => {

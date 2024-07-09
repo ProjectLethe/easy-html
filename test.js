@@ -37,7 +37,7 @@ const inputObj = [
     description: "What is your Favorite Search Engine?",
     choices: ["Google", "DuckDuckGo", "Ecosia", "other"],
     default: "Google",
-    
+    isVisible: true,
   },
   {
     id: "range",

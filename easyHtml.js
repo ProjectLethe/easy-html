@@ -5,9 +5,7 @@ const ezForChildrenMap = new Map();
 for (const oneEzForElement of baseEzForElemens) {
   const childNodes = Array.from(oneEzForElement.childNodes);
   ezForChildrenMap.set(oneEzForElement, childNodes);
-  while (oneEzForElement.firstChild) {
-    oneEzForElement.removeChild(oneEzForElement.firstChild);
-  }
+  ezRemoveChildren(oneEzForElement);
 }
 
 const baseEzIfElements = document.querySelectorAll("ez-if");
@@ -54,7 +52,7 @@ export function setEzVariables(newValues) {
  * @param {NodeList} ezIfElements - The list of ezIf elements to update.
  * @return {void} This function does not return a value.
  */
-function updateEzIfs(ezIfElements) {
+export function updateEzIfs(ezIfElements) {
   for (const oneElement of ezIfElements) {
     if (
       oneElement.tagName.toLowerCase() !== "ez-if" ||
@@ -73,7 +71,7 @@ function updateEzIfs(ezIfElements) {
  * @param {NodeList} ezValueElemens - The list of ezValue elements to update.
  * @return {void} This function does not return a value.
  */
-function updateEzValues(ezValueElemens) {
+export function updateEzValues(ezValueElemens) {
   for (const oneElement of ezValueElemens) {
     if (
       oneElement.tagName.toLowerCase() !== "ez-value" ||
@@ -91,7 +89,7 @@ function updateEzValues(ezValueElemens) {
  *
  * @return {void} This function does not return a value.
  */
-function updateEzFor(ezForElemens) {
+export function updateEzFor(ezForElemens) {
   for (const oneEzForElement of ezForElemens) {
     if (
       oneEzForElement.tagName.toLowerCase() !== "ez-for" ||
@@ -128,6 +126,12 @@ function updateEzFor(ezForElemens) {
       ezVariables[elementName] = undefined;
       ezVariables[counterName] = undefined;
     });
+  }
+}
+
+export function ezRemoveChildren(element) {
+  while (element.firstChild) {
+    element.removeChild(element.firstChild);
   }
 }
 
@@ -182,11 +186,12 @@ class EzInputAbstractElement {
     this._type = config.type;
     this._description = config.description;
     this._value = config.default;
+
     this._htmlElement = document.createElement("div");
     this._htmlElement.classList.add("ez-input", "m-3", "flex", "items-center");
     this._inputContainer = document.createElement("label");
     this._inputContainer.classList.add("w-full", "block");
-    this._htmlElement.appendChild(this._inputContainer);
+    this.isVisible = config.isVisible
 
     this._callbacks = [];
     this._descriptionElement = document.createElement("span");
@@ -213,6 +218,20 @@ class EzInputAbstractElement {
   }
   get description() {
     return this._description;
+  }
+
+  set isVisible(value = true) {
+    if(value === this._isVisible){
+      return;
+    }
+    if(value) {
+      this._htmlElement.appendChild(this._inputContainer);
+      this._htmlElement.classList.remove("hidden");
+    }else {
+      ezRemoveChildren(this._htmlElement);
+      this._htmlElement.classList.add("hidden");
+    }
+    this._isVisible = value;
   }
 
   set error(value) {
@@ -438,9 +457,7 @@ export class EzDropdownElement extends EzInputAbstractElement {
 
   set choices(value) {
     this._choices;
-    while (this._inputElement.firstChild) {
-      this._inputElement.removeChild(this._inputElement.firstChild);
-    }
+    ezRemoveChildren(this._inputElement);
     value.forEach((choice) => {
       const option = document.createElement("option");
       option.value = choice;
@@ -562,12 +579,12 @@ export class EzNumberElement extends EzInputAbstractElement {
     value = Number(value);
     if (value < this.min) {
       this.value = this.min;
-      this.warning = `Input (${value}) must be greater than ${this.min}`
+      this.warning = `Input (${value}) must be greater than ${this.min}`;
       return;
     }
     if (value > this.max) {
       this.value = this.max;
-      this.warning = `Input (${value}) must be smaller than ${this.max}`
+      this.warning = `Input (${value}) must be smaller than ${this.max}`;
       return;
     }
     this.error = "";

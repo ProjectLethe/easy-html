@@ -49,6 +49,37 @@ const inputObj = [
     showValue: true,
     description: "How old are you?",
   },
+  {
+    id: "range2",
+    type: "number",
+    isRange: false,
+    min: 10,
+    max: 100,
+    default: 50,
+    showValue: true,
+    description: "How old are you?",
+  },
+  {
+    id: "s1",
+    type: "section",
+    headline: "This is a Section",
+    description: "This is a Section Description",
+    foldable: true,
+    children: [
+      {
+        id: "s1c1",
+        type: "text",
+        length: 20,
+        description: "Name:",
+      },
+      {
+        id: "s1c2",
+        type: "textarea",
+        length: 2000,
+        description: "What do you want to say",
+      },
+    ]
+  }
 ];
 
 // Anwendung der Funktion

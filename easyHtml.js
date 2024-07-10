@@ -135,6 +135,14 @@ export function ezRemoveChildren(element) {
   }
 }
 
+/**
+ * Creates a dialog element based on the provided configuration.
+ * @param {Object} config - Configuration object for the dialog element.
+ * @param {Object} elements - Object to store the dialog elements.
+ * @param {number} level - The level of the section element.
+ * @returns {EzAbstractElement} The created dialog element.
+ * @throws {Error} Throws an error if the element type is not supported.
+ */
 function createDialogElement(config, elements, level) {
   switch (config.type) {
     case "text":
@@ -156,7 +164,16 @@ function createDialogElement(config, elements, level) {
   }
 }
 
+/**
+ * Represents a dialog in the application.
+ * @class
+ */
 export class EzDialog {
+  /**
+   * Creates an instance of EzDialog.
+   * @param {Array} config - Configuration array for the dialog elements.
+   * @param {Object} elementsObj - Object to store the dialog elements.
+   */
   constructor(config, elementsObj = {}) {
     this.elements = elementsObj;
     this._htmlElement = document.createElement("div");
@@ -164,7 +181,7 @@ export class EzDialog {
       "ez-dialog",
       "p-3",
       "flex",
-      "flex-col",
+      "flex-wrap",
       "w-fit"
     );
     //TODO Add obj config with headline and multiple step dialog
@@ -175,8 +192,14 @@ export class EzDialog {
 
     configList.forEach((elementConfig) => {
       if (elementConfig.id && elementConfig.type) {
-        this.elements[elementConfig.id] = createDialogElement(elementConfig, this.elements, 2);
-        this._htmlElement.appendChild(this.elements[elementConfig.id].htmlElement);
+        this.elements[elementConfig.id] = createDialogElement(
+          elementConfig,
+          this.elements,
+          2
+        );
+        this._htmlElement.appendChild(
+          this.elements[elementConfig.id].htmlElement
+        );
       }
     });
   }
@@ -189,14 +212,30 @@ export class EzDialog {
   }
 }
 
+/**
+ * Represents an abstract element in the application.
+ * @class
+ */
 class EzAbstractElement {
+  /**
+   * Creates an instance of EzAbstractElement.
+   * @param {Object} config - Configuration object for the element. Example: {type: "text", description: "Name:", default: "John Doe", isVisible: true, error: "", warning: ""}
+   */
   constructor(config) {
     this._type = config.type;
     this._description = config.description || "";
     this._value = config.default;
 
     this._htmlElement = document.createElement("div");
-    this._htmlElement.classList.add("ez-input", "m-3", "flex", "items-end");
+    this._htmlElement.classList.add(
+      "ez-input",
+      "m-3",
+      "flex",
+      "items-end",
+      "flex-1",
+      "min-w-[45%]",
+      "max-w-full"
+    );
     this._childrenContainer = document.createElement("label");
     this._childrenContainer.classList.add("w-full", "block");
     this.isVisible = config.isVisible;
@@ -296,7 +335,16 @@ class EzAbstractElement {
   }
 }
 
+/**
+ * Represents an abstract text element in the application.
+ * @class
+ * @extends EzAbstractElement
+ */
 class EzTextAbstractElement extends EzAbstractElement {
+  /**
+   * Creates an instance of EzTextAbstractElement.
+   * @param {Object} config - Configuration object for the text element. Example: {type: "text", maxLength: 20, placeholder: "example Name", regex: "^[a-zA-Z]+$", regexError: "Input must be a valid name"}
+   */
   constructor(config) {
     super(config);
     this._regexStr = "";
@@ -363,7 +411,16 @@ class EzTextAbstractElement extends EzAbstractElement {
   }
 }
 
+/**
+ * Represents a text element in the application.
+ * @class
+ * @extends EzTextAbstractElement
+ */
 export class EzTextElement extends EzTextAbstractElement {
+  /**
+   * Creates an instance of EzTextElement.
+   * @param {Object} config - Configuration object for the text element. Example: {type: "text", maxLength: 20, placeholder: "example Name", regex: "^[a-zA-Z]+$", regexError: "Input must be a valid name"}
+   */
   constructor(config) {
     super(config);
 
@@ -387,7 +444,16 @@ export class EzTextElement extends EzTextAbstractElement {
   }
 }
 
+/**
+ * Represents a text area element in the application.
+ * @class
+ * @extends EzTextAbstractElement
+ */
 export class EzTextAreaElement extends EzTextAbstractElement {
+  /**
+   * Creates an instance of EzTextAreaElement.
+   * @param {Object} config - Configuration object for the text area element. Example: {type: "text", maxLength: 20, placeholder: "example Name", regex: "^[a-zA-Z]+$", regexError: "Input must be a valid name"}
+   */
   constructor(config) {
     super(config);
 
@@ -411,7 +477,16 @@ export class EzTextAreaElement extends EzTextAbstractElement {
   }
 }
 
+/**
+ * Represents a button element in the application.
+ * @class
+ * @extends EzAbstractElement
+ */
 export class EzButtonElement extends EzAbstractElement {
+  /**
+   * Creates an instance of EzButtonElement.
+   * @param {Object} config - Configuration object for the button element.
+   */
   constructor(config) {
     super(config);
 
@@ -431,7 +506,17 @@ export class EzButtonElement extends EzAbstractElement {
   }
 }
 
+/**
+ * Represents a dropdown element in the application.
+ * @class
+ * @extends EzAbstractElement
+ */
 export class EzDropdownElement extends EzAbstractElement {
+  /**
+   * Creates an instance of EzDropdownElement.
+   * @param {Object} config - Configuration object for the dropdown element. Example: {type: "dropdown", choices: ["a", "b", "c"]}
+   * @throws {Error} Throws an error if choices are not an array.
+   */
   constructor(config) {
     super(config);
     this._value = config.default;
@@ -488,7 +573,18 @@ export class EzDropdownElement extends EzAbstractElement {
   }
 }
 
+/**
+ * Represents a number input element in the application.
+ * @class
+ * @extends EzAbstractElement
+ */
 export class EzNumberElement extends EzAbstractElement {
+  /**
+   * Creates an instance of EzNumberElement.
+   * @param {Object} config - Configuration object for the number element. Example: {type: "number", isRange: false, min: 10, max: 100, onlyInt: true}
+   * @throws {Error} Throws an error if min is greater than max.
+   * @throws {Error} Throws an error if default value is not valid.
+   */
   constructor(config) {
     super(config);
     if (config.min > config.max) {
@@ -626,10 +722,18 @@ export class EzNumberElement extends EzAbstractElement {
   }
 }
 
+/**
+ * Represents a checkbox element in the application.
+ * @class
+ * @extends EzAbstractElement
+ */
 export class EzCheckboxElement extends EzAbstractElement {
+  /**
+   * Creates an instance of EzCheckboxElement.
+   * @param {Object} config - Configuration object for the checkbox element. Example: {type: "checkbox", isSwitch: true}
+   */
   constructor(config) {
     super(config);
-
     this._inputElement = document.createElement("input");
     this._inputElement.type = "checkbox";
     this._inputElement.checked = config.default;
@@ -672,16 +776,37 @@ export class EzCheckboxElement extends EzAbstractElement {
     return this._inputElement.checked;
   }
 }
+
+/**
+ * Represents a section element in the application.
+ * @class
+ * @extends EzAbstractElement
+ */
 export class EzSectionElement extends EzAbstractElement {
+  /**
+   * Creates an instance of EzSectionElement.
+   * @param {Object} config - Configuration object for the section element. Example: {type: "section", headline: "S 1", foldable: true, isVisible: true, children: [{id: "e1", "type": "text"}]}
+   * @param {Object} elements - Object to store the section elements.
+   * @param {number} level - The level of the section heading.
+   * @throws {Error} Throws an error if level is not between 1 and 6.
+   */
   constructor(config, elements, level) {
     super(config);
-    this._htmlElement.classList.add("ez-section");
+    this._htmlElement.classList.add("ez-section", "min-w-full");
     this._childrenContainer = document.createElement("div");
     this._header = document.createElement("div");
     if (config.foldable) {
       this._childrenContainer = document.createElement("details");
       this._header = document.createElement("summary");
-      this._header.classList.add("btn", "block", "w-full");
+      this._header.classList.add(
+        "block",
+        "w-full",
+        "flex",
+        "items-center",
+        "select",
+        "btn"
+      );
+      
     }
     if (level < 1) {
       throw new Error(`level must be between 1 and 6 not ${level}`);
@@ -690,19 +815,34 @@ export class EzSectionElement extends EzAbstractElement {
     this._headline = document.createElement(`h${level}`);
     this._headline.innerText = config.headline || "";
 
+    this._header.appendChild(this._headline);
+    this._childrenContainer.classList.add(
+      "w-full",
+      "p-3",
+      "flex",
+      "flex-wrap",
+    );
+
     this._childrenContainer.appendChild(this._header);
-    this._childrenContainer.appendChild(this._headline);
+    this._header.appendChild(this._headline);
     this._childrenContainer.appendChild(this._descriptionElement);
     this._childrenContainer.appendChild(this._errorLabel);
     this._childrenContainer.appendChild(this._warningLabel);
 
-    configList.forEach((elementConfig) => {
+    config.children?.forEach((elementConfig) => {
       if (elementConfig.id && elementConfig.type) {
-        elements[elementConfig.id] = createDialogElement(elementConfig, elements, level+1);
-        this._htmlElement.appendChild(elements[elementConfig.id].htmlElement);
+        elements[elementConfig.id] = createDialogElement(
+          elementConfig,
+          elements,
+          level + 1
+        );
+        this._childrenContainer.appendChild(
+          elements[elementConfig.id].htmlElement
+        );
       }
     });
 
+    this.isVisible = false;
     this.isVisible = config.isVisible;
   }
 

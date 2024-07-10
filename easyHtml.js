@@ -806,7 +806,7 @@ export class EzSectionElement extends EzAbstractElement {
         "select",
         "btn"
       );
-      
+      this._childrenContainer.open = config.open === undefined || config.open === true;
     }
     if (level < 1) {
       throw new Error(`level must be between 1 and 6 not ${level}`);
@@ -851,5 +851,12 @@ export class EzSectionElement extends EzAbstractElement {
   }
   get headline() {
     return this._headline.innerText;
+  }
+
+  set open(value) {
+    this._childrenContainer.open = value;
+  }
+  get open() {
+    return this._childrenContainer.open;
   }
 }

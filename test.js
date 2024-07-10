@@ -65,6 +65,7 @@ const inputObj = [
     headline: "This is a Section",
     description: "This is a Section Description",
     foldable: true,
+    open: true,
     children: [
       {
         id: "s1c1",

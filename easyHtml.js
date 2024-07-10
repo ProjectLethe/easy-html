@@ -804,7 +804,8 @@ export class EzSectionElement extends EzAbstractElement {
         "flex",
         "items-center",
         "select",
-        "btn"
+        "btn",
+        "bg-base-200",
       );
       this._childrenContainer.open = config.open === undefined || config.open === true;
     }
